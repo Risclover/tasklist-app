@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/tasklist-app/static/css/main.71e11aeb.css",
+    "main.js": "/tasklist-app/static/js/main.2a1d2279.js",
+    "index.html": "/tasklist-app/index.html",
+    "main.71e11aeb.css.map": "/tasklist-app/static/css/main.71e11aeb.css.map",
+    "main.2a1d2279.js.map": "/tasklist-app/static/js/main.2a1d2279.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.71e11aeb.css",
+    "static/js/main.2a1d2279.js"
+  ]
+}
