@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./App.css";
+import { nanoid } from "nanoid";
 
 // Components
 import Navigation from "./components/navigation/Navigation";
@@ -12,16 +13,35 @@ import InputTask from "./components/project/InputTask";
 import Tasklist from "./components/project/Tasklist";
 import Task from "./components/project/Task";
 import TopNavItem from "./components/navigation/TopNavItem";
+import Modal from "./components/project/Modal";
+import Completed from "./components/project/Completed";
+import ProjectNavItem from "./components/navigation/ProjectNavItem";
 
 // Navigation items
 const navItems = ["All", "Important", "Today", "This Week", "Completed"];
 
+const todaysDate = (separator = "") => {
+  let newDate = new Date();
+  let date = newDate.getDate();
+  let month = newDate.getMonth() + 1;
+  let year = newDate.getFullYear();
+
+  return `${year}${separator}${
+    month < 10 ? `0${month}` : `${month}`
+  }${separator}${date}`;
+};
+
 // Principle function
-function App() {
-  const [tasks, setTasks] = useState([]); // Array of task objects
-  const [projects, setProjects] = useState(["Default Project"]); // Array of projects
+function App(props) {
+  const [tasks, setTasks] = useState([props.tasks]); // Array of task objects
+  const [projects, setProjects] = useState([props.projects]); // Array of projects
   const [activeProject, setActiveProject] = useState("Tasklist"); // Current active project
   const [isStar, setIsStar] = useState(false);
+  const [taskCount, setTaskCount] = useState(0);
+  const [importantCount, setImportantCount] = useState(0);
+  const [todayCount, setTodayCount] = useState(0);
+  const [weekCount, setWeekCount] = useState(0);
+  const [completedTaskCount, setCompletedTaskCount] = useState(0);
 
   // Set active project when main nav items clicked
   const handleTopNavClick = (e) => {
@@ -60,6 +80,40 @@ function App() {
     const projectNavItems = document.querySelectorAll(".set-project");
 
     if (e.key === "Enter") {
+      if (projectTitleInput.value === "" || projectTitleInput.value === " ") {
+        alert("ERROR: Project title cannot be blank.");
+        projectTitle.textContent = activeProject;
+        projectTitleInput.value = activeProject;
+      } else {
+        projectTitle.textContent = projectTitleInput.value;
+        projectTitleInput.style.display = "none";
+        projectTitle.style.display = "block";
+        projectNavItems.forEach((item) => {
+          if (item.textContent === activeProject) {
+            item.textContent = projectTitleInput.value;
+          }
+        });
+        tasks.forEach((task) => {
+          if (task.project === activeProject) {
+            task.project = projectTitleInput.value;
+          }
+        });
+        setActiveProject(projectTitleInput.value);
+        setProjects([...projects, projectTitleInput.value]);
+      }
+    }
+  };
+
+  const handleProjectBlur = (e) => {
+    const projectTitleInput = document.querySelector(".edit-project-title");
+    const projectTitle = document.querySelector(".project-title");
+    const projectNavItems = document.querySelectorAll(".set-project");
+    if (projectTitleInput.value === "" || projectTitleInput.value === " ") {
+      alert("ERROR: Project title cannot be blank.");
+      projectTitle.textContent = activeProject;
+      projectTitleInput.value = activeProject;
+      projectTitleInput.focus();
+    } else {
       projectTitle.textContent = projectTitleInput.value;
       projectTitleInput.style.display = "none";
       projectTitle.style.display = "block";
@@ -77,26 +131,6 @@ function App() {
     }
   };
 
-  const handleProjectBlur = (e) => {
-    const projectTitleInput = document.querySelector(".edit-project-title");
-    const projectTitle = document.querySelector(".project-title");
-    const projectNavItems = document.querySelectorAll(".set-project");
-    projectTitle.textContent = projectTitleInput.value;
-    projectTitleInput.style.display = "none";
-    projectTitle.style.display = "block";
-    projectNavItems.forEach((item) => {
-      if (item.textContent === activeProject) {
-        item.textContent = projectTitleInput.value;
-      }
-    });
-    tasks.forEach((task) => {
-      if (task.project === activeProject) {
-        task.project = projectTitleInput.value;
-      }
-    });
-    setActiveProject(projectTitleInput.value);
-  };
-
   const handleProjectTitle = (e) => {
     if (e.key === "Enter") {
       if (e.target.value === "" || e.target.value === " ") {
@@ -109,6 +143,23 @@ function App() {
         e.target.parentElement.children[1].textContent = e.target.value;
         setActiveProject(e.target.value);
       }
+    }
+  };
+
+  const handleProjectTitleBlur = (e) => {
+    const projectTitleInput = document.querySelector(".edit-project-title");
+    const projectTitle = document.querySelector(".project-title");
+    if (e.target.value === "" || e.target.value === " ") {
+      alert(
+        "ERROR: Project title cannot be blank. Please name your new project - you can always rename it later!"
+      );
+      projectTitle.textContent = activeProject;
+      projectTitleInput.value = activeProject;
+    } else {
+      e.target.style.display = "none";
+      e.target.parentElement.children[1].style.display = "block";
+      e.target.parentElement.children[1].textContent = e.target.value;
+      setActiveProject(e.target.value);
     }
   };
 
@@ -130,22 +181,35 @@ function App() {
         );
       });
       setTasks(updatedTasks);
+      localStorage.setItem("tasks", JSON.stringify(updatedTasks));
       e.target.parentElement.parentElement.parentElement.remove();
+    } else {
+      setActiveProject(
+        e.target.parentElement.parentElement.parentElement.children[0]
+          .children[1].chidlren[0].children[0].textContent
+      );
+      console.log(activeProject);
     }
   };
 
   const addTask = () => {
     const inputTask = document.querySelector(".type-task");
-    const newTask = {
-      id: tasks.length,
-      title: inputTask.value,
-      description: "",
-      duedates: "",
-      project: activeProject,
-      important: false,
-      completed: false,
-    };
-    setTasks([...tasks, newTask]);
+    if (inputTask.value === "" || inputTask.value === " ") {
+      alert("ERROR: Task title cannot be blank.");
+    } else {
+      setTaskCount(taskCount + 1);
+      const newTask = {
+        id: nanoid(),
+        title: inputTask.value,
+        description: "",
+        dueDate: "",
+        project: activeProject,
+        important: false,
+        completed: false,
+      };
+      setTasks([...tasks, newTask]);
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
     inputTask.focus();
     inputTask.value = "";
   };
@@ -153,164 +217,247 @@ function App() {
   const handleImportance = (id) => {
     const updatedTasks = tasks.map((task) => {
       if (task.id === id) {
+        if (!task.important) {
+          setImportantCount(importantCount + 1);
+        } else {
+          setImportantCount(importantCount - 1);
+        }
         return { ...task, important: !task.important };
       }
       setIsStar(!isStar);
       return task;
     });
     setTasks(updatedTasks);
+    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
   };
 
-  const handleCompleted = (id) => {
+  function handleCompleted(id, project) {
     const updatedTasks = tasks.map((task) => {
-      if (task.id === id) {
+      if (id === task.id) {
+        if (!task.completed) {
+          setCompletedTaskCount(completedTaskCount + 1);
+          setTaskCount(taskCount - 1);
+
+          if (task.important) {
+            setImportantCount(importantCount - 1);
+          }
+        } else {
+          setCompletedTaskCount(completedTaskCount - 1);
+          setTaskCount(taskCount + 1);
+
+          if (task.important) {
+            setImportantCount(importantCount + 1);
+          }
+        }
         return { ...task, completed: !task.completed };
       }
       return task;
     });
+
     setTasks(updatedTasks);
-  };
+    localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+  }
 
   const editTask = (e) => {
     e.target.style.display = "none";
-    e.target.parentElement.children[2].style.display = "block";
-    e.target.parentElement.children[2].value = e.target.textContent;
-    e.target.parentElement.children[2].focus();
+    e.target.parentElement.children[1].style.display = "block";
+    e.target.parentElement.children[1].value = e.target.textContent;
+    e.target.parentElement.children[1].focus();
   };
 
   const handleTaskInput = (e, id) => {
     if (e.key === "Enter") {
+      if (e.target.value === "" || e.target.value === " ") {
+        alert("ERROR: Task cannot be blank.");
+        e.target.value = "Please edit me.";
+        tasks.forEach((task) => {
+          if (task.id === id) {
+            task.title = e.target.value;
+          }
+        });
+        e.target.style.display = "none";
+        e.target.parentElement.children[0].style.display = "block";
+        e.target.parentElement.children[0].textContent = e.target.value;
+      } else {
+        tasks.forEach((task) => {
+          if (task.id === id) {
+            task.title = e.target.value;
+          }
+        });
+        e.target.style.display = "none";
+        e.target.parentElement.children[0].style.display = "block";
+        e.target.parentElement.children[0].textContent = e.target.value;
+      }
+    }
+  };
+
+  const handleInputBlur = (e, id) => {
+    if (e.target.value === "" || e.target.value === " ") {
+      alert("ERROR: Task cannot be blank.");
+      e.target.value = "Please edit me.";
+      tasks.forEach((task) => {
+        if (task.id === id) {
+          task.title = e.target.value;
+        }
+      });
+
+      e.target.style.display = "none";
+      e.target.parentElement.children[0].style.display = "block";
+      e.target.parentElement.children[0].textContent = e.target.value;
+    } else {
       tasks.forEach((task) => {
         if (task.id === id) {
           task.title = e.target.value;
         }
       });
       e.target.style.display = "none";
-      e.target.parentElement.children[1].style.display = "block";
-      e.target.parentElement.children[1].textContent = e.target.value;
+      e.target.parentElement.children[0].style.display = "block";
+      e.target.parentElement.children[0].textContent = e.target.value;
     }
-  };
-
-  const handleInputBlur = (e, id) => {
-    tasks.forEach((task) => {
-      if (task.id === id) {
-        task.title = e.target.value;
-      }
-    });
-    e.target.style.display = "none";
-    e.target.parentElement.children[1].style.display = "block";
-    e.target.parentElement.children[1].textContent = e.target.value;
   };
 
   const deleteTask = (id) => {
     if (window.confirm("Are you sure you want to delete this task?")) {
+      setTaskCount(taskCount - 1);
       const updatedTasks = tasks.filter((task) => {
         return task.id !== id;
       });
       setTasks(updatedTasks);
+      localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+    }
+  };
+
+  const openModal = (e) => {
+    const modalFull = document.querySelector(".modal-full");
+    const modalTitle = document.querySelector(".modal-title-input");
+    const modalDescription = document.querySelector(".modal-description-input");
+    const modalDate = document.querySelector(".modal-duedate-input");
+
+    modalFull.setAttribute(
+      "class",
+      `${e.target.parentElement.parentElement.id} modal-full`
+    );
+
+    let modalTask = modalFull.getAttribute("class");
+
+    tasks.forEach((task) => {
+      if (task.id + " modal-full" === modalTask) {
+        modalTitle.value = task.title;
+        modalDescription.value = task.description;
+        modalDate.value = task.dueDate;
+      }
+    });
+
+    modalFull.style.display = "block";
+  };
+
+  const closeModal = (e) => {
+    const modalFull = document.querySelector(".modal-full");
+    modalFull.style.display = "none";
+  };
+
+  const submitModal = (e) => {
+    const modalFull = document.querySelector(".modal-full");
+    const modalTitle = document.querySelector(".modal-title-input");
+    const modalDescription = document.querySelector(".modal-description-input");
+    const modalDate = document.querySelector(".modal-duedate-input");
+
+    let modalTask = modalFull.getAttribute("class");
+
+    if (modalTitle.value === "" || modalTitle.value === " ") {
+      alert("ERROR: Task title cannot be blank.");
+    } else {
+      const updatedTasks = tasks.map((task) => {
+        if (modalTask === task.id + " modal-full") {
+          return {
+            ...task,
+            title: modalTitle.value,
+            description: modalDescription.value,
+            dueDate: modalDate.value,
+          };
+        }
+        return task;
+      });
+      setTasks(updatedTasks);
+      localStorage.setItem("tasks", JSON.stringify(updatedTasks));
+      console.log(updatedTasks);
+      modalFull.style.display = "none";
     }
   };
 
   const taskList = tasks.map((task) => {
-    if (activeProject === "Important") {
-      if (task.important === true) {
-        return (
-          <Task
-            id={task.id}
-            title={task.title}
-            description={task.description}
-            dueDate={task.duedate}
-            completed={task.completed}
-            important={task.important}
-            handleImportance={handleImportance}
-            editTask={editTask}
-            handleTaskInput={handleTaskInput}
-            handleInputBlur={handleInputBlur}
-            deleteTask={deleteTask}
-          />
-        );
-      }
-    } else if (activeProject === "All") {
+    if (
+      (!task.completed &&
+        ((task.important === true && activeProject === "Important") ||
+          (task.dueDate === todaysDate("-") && activeProject === "Today") ||
+          activeProject === "All")) ||
+      (task.completed && activeProject === "Completed") ||
+      (activeProject === task.project && !task.completed)
+    ) {
       return (
         <Task
           id={task.id}
           title={task.title}
-          description={task.description}
-          dueDate={task.duedate}
           completed={task.completed}
           important={task.important}
+          dueDate={task.dueDate}
+          description={task.description}
           handleImportance={handleImportance}
+          handleCompleted={handleCompleted}
           editTask={editTask}
           handleTaskInput={handleTaskInput}
           handleInputBlur={handleInputBlur}
           deleteTask={deleteTask}
+          openModal={openModal}
         />
       );
-    } else {
-      if (task.project === activeProject) {
-        return (
-          <Task
-            id={task.id}
-            title={task.title}
-            description={task.description}
-            dueDate={task.duedate}
-            completed={task.completed}
-            important={task.important}
-            handleImportance={handleImportance}
-            editTask={editTask}
-            handleTaskInput={handleTaskInput}
-            handleInputBlur={handleInputBlur}
-            deleteTask={deleteTask}
-          />
-        );
-      }
     }
   });
+
+  const completedList = tasks.map((task) => {
+    if (task.project === activeProject && task.completed === true) {
+      return (
+        <Task
+          id={task.id}
+          title={task.title}
+          completed={task.completed}
+          important={task.important}
+          dueDate={task.dueDate}
+          description={task.description}
+          handleImportance={handleImportance}
+          handleCompleted={handleCompleted}
+          editTask={editTask}
+          handleTaskInput={handleTaskInput}
+          handleInputBlur={handleInputBlur}
+          deleteTask={deleteTask}
+          openModal={openModal}
+        />
+      );
+    }
+  });
+
+  localStorage.setItem("tasks", JSON.stringify(tasks));
 
   return (
     <div className="app">
       <Navigation>
         <TopNav>
-          {navItems.map((item) => {
-            return <TopNavItem item={item} onClick={handleTopNavClick} />;
-          })}
+          {navItems.map((item) => (
+            <li onClick={handleTopNavClick}>{item}</li>
+          ))}
         </TopNav>
         <ProjectNav>
           {projects.map((project, index) => {
-            if (index === 0) {
-              return (
-                <li className="project-nav-item" onClick={handleProjectClick}>
-                  <div>
-                    <input
-                      type="text"
-                      className="type-project"
-                      placeholder="i.e. Summer Chores"
-                      ref={(input) => input && input.focus()}
-                      onKeyPress={handleProjectTitle}
-                    />
-                    <span className="set-project"></span>
-                  </div>
-                </li>
-              );
-            } else {
-              return (
-                <li className="project-nav-item" onClick={handleProjectClick}>
-                  <div>
-                    <input
-                      type="text"
-                      className="type-project"
-                      placeholder="i.e. Summer Chores"
-                      ref={(input) => input && input.focus()}
-                      onKeyPress={handleProjectTitle}
-                    />
-                    <span className="set-project"></span>
-                  </div>
-                  <button className="project-delete" onClick={deleteProject}>
-                    <i className="fa-solid fa-trash"></i>
-                  </button>
-                </li>
-              );
-            }
+            return (
+              <ProjectNavItem
+                title={project}
+                index={index}
+                handleProjectTitle={handleProjectTitle}
+                handleProjectTitleBlur={handleProjectTitleBlur}
+                handleProjectClick={handleProjectClick}
+                deleteProject={deleteProject}
+              />
+            );
           })}
         </ProjectNav>
         <button className="add-project" onClick={addProject}>
@@ -324,23 +471,47 @@ function App() {
             activeProject={activeProject}
             handleProjectInput={handleProjectInput}
             handleProjectBlur={handleProjectBlur}
+            completedCount={completedTaskCount}
+            importantCount={importantCount}
+            taskCount={taskCount}
           />
           {activeProject === "All" ||
           activeProject === "Important" ||
           activeProject === "Completed" ||
           activeProject === "Today" ||
           activeProject === "This Week" ? (
-            <InputTask activeProject={true} onClick={addTask} disabled={true} />
+            <InputTask
+              activeProject={true}
+              onClick={addTask}
+              disabled={true}
+              onKeyPress={(e) => (e.key === "Enter" ? addTask() : "")}
+            />
           ) : (
             <InputTask
               activeProject={false}
               onClick={addTask}
               disabled={false}
+              onKeyPress={(e) => (e.key === "Enter" ? addTask() : "")}
             />
           )}
         </ProjectHead>
-        <Tasklist>{taskList}</Tasklist>
+        <div className="tasklist">
+          <Tasklist>{taskList}</Tasklist>
+          {activeProject !== "All" &&
+          activeProject !== "Today" &&
+          activeProject !== "This Week" &&
+          activeProject !== "Important" &&
+          activeProject !== "Completed" &&
+          tasks.map(
+            (task) => task.completed && task.project === activeProject
+          ) ? (
+            <Completed>{completedList}</Completed>
+          ) : (
+            ""
+          )}
+        </div>
       </Project>
+      <Modal closeModal={closeModal} submitModal={submitModal} />
     </div>
   );
 }

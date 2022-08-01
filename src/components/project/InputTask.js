@@ -8,6 +8,7 @@ export default function InputTask(props) {
         className="type-task"
         disabled={props.disabled}
         placeholder={props.activeProject ? "Cannot add task right now" : ""}
+        onKeyPress={props.onKeyPress}
       />
       <button
         className="add-task"
