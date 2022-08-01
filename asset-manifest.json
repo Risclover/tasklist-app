@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/tasklist-app/static/css/main.2b82ce2f.css",
+    "main.css": "/tasklist-app/static/css/main.a90150b0.css",
     "main.js": "/tasklist-app/static/js/main.1110c54d.js",
     "index.html": "/tasklist-app/index.html",
-    "main.2b82ce2f.css.map": "/tasklist-app/static/css/main.2b82ce2f.css.map",
+    "main.a90150b0.css.map": "/tasklist-app/static/css/main.a90150b0.css.map",
     "main.1110c54d.js.map": "/tasklist-app/static/js/main.1110c54d.js.map"
   },
   "entrypoints": [
-    "static/css/main.2b82ce2f.css",
+    "static/css/main.a90150b0.css",
     "static/js/main.1110c54d.js"
   ]
 }
