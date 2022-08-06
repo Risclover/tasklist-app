@@ -1,6 +1,6 @@
 # Tasklist App
 
-![](/src/assets/images/tasklist-app-desktop.png)
+![](/images/tasklist-app-desktop.png)
 
 ## Table of Contents
 
